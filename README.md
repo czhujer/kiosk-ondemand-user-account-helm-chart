@@ -1,5 +1,5 @@
 # ondemand-user-account-helm-chart
-- helm chart for creating user account (kiosk and cert-manager CRDs) in ["ondemand k8s envs"](https://www.notion.so/ataccama/Kubernetes-Replacement-for-Nomad-Deployments-for-Developer-efc7a69b9e3541b6a00bfe1b83aca18e)
+- helm chart for creating user account (kiosk and cert-manager CRDs) in "ondemand k8s envs"
 
 [[_TOC_]]
 
@@ -8,21 +8,21 @@ helm upgrade --install ..
 
 ## features
 
-### create single kiosk account, accountquota and space
+### create single kiosk account, accountquota and space + certificate
 
-### create more kiosk spaces for kiosk account
+### create more kiosk spaces for kiosk account + certificate
 
 ### share space/namespace with another person(s)
 
 #### final status
 ```shell
-$ kubectl get accounts.config.kiosk.sh karel.kovarik -o yaml |yq eval '.spec' -
+$ kubectl get accounts.config.kiosk.sh karel.second -o yaml |yq eval '.spec' -
 space:
   limit: 1
   spaceTemplate:
     metadata:
       annotations:
-        email: Karel.Kovarik@ataccama.com
+        email: Karel.Second@company.com
         workflowuid: 132041d7-1693-486a-a703-857e11db23e5
       creationTimestamp: null
       labels:
@@ -30,19 +30,15 @@ space:
 subjects:
   - apiGroup: rbac.authorization.k8s.io
     kind: User
-    name: Jaroslav.Medek@ataccama.com
+    name: Pavel.First@company.com
   - apiGroup: rbac.authorization.k8s.io
     kind: User
-    name: Karel.Kovarik@ataccama.com
+    name: Karel.Second@company.com
 ```
 ```shell
-$ kubectl -n patrik-majer get pods --as Karel.Kovarik@ataccama.com
-Error from server (Forbidden): pods is forbidden: User "Karel.Kovarik@ataccama.com" cannot list resource "pods" in API group "" in the namespace "patrik-majer"
+$ kubectl -n patrik-majer get pods --as karel.second@company.com
+Error from server (Forbidden): pods is forbidden: User "Karel.Second@company.com" cannot list resource "pods" in API group "" in the namespace "patrik-majer"
 
-$ kubectl -n karel-kovarik get pods --as Jaroslav.Medek@ataccama.com |wc -l
+$ kubectl -n karel.second get pods --as Pavel.First@company.com |wc -l
       14
 ```
-
-## authors
-- Patrik Majer
-- Lukas Mrtvy

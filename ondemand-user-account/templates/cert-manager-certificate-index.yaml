@@ -1,0 +1,31 @@
+{{- $generatedNamespace := include "ondemand-user-account.generatedNamespace" . }}
+{{- $generatedKioskName := include "ondemand-user-account.generatedKioskName" . }}
+{{- $labels := include "ondemand-user-account.labels" . }}
+{{- if .Values.certificate.indexedCertificate.enabled }}
+{{- if gt (int64 .Values.indexedSpace.count) (int64 0) }}
+{{- range $i := untilStep 1 (int .Values.indexedSpace.count) 1 }}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ $.Values.certificate.name }}
+  namespace: {{ $generatedNamespace }}-{{ $i }}
+  annotations:
+    "helm.sh/hook": post-install
+    helm.sh/resource-policy: keep
+  labels:
+    {{- $labels | nindent 4 }}
+  {{- if $.Values.certificate.extraLabels }}
+    {{- toYaml $.Values.certificate.extraLabels | nindent 4 -}}
+  {{- end }}
+spec:
+  secretName: {{ $.Values.certificate.secretName }}
+  issuerRef:
+    name: {{ $.Values.certificate.issuer.name }}
+    kind: {{ $.Values.certificate.issuer.kind }}
+  dnsNames:
+    - "{{ $generatedNamespace }}-{{ $i }}.{{ $.Values.certificate.dnsDomain }}"
+    - "*.{{ $generatedNamespace }}-{{ $i }}.{{ $.Values.certificate.dnsDomain }}"
+{{- end }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,22 @@
+{{- $generatedNamespace := include "ondemand-user-account.generatedNamespace" . }}
+{{- $generatedKioskName := include "ondemand-user-account.generatedKioskName" . }}
+{{- $labels := include "ondemand-user-account.labels" . }}
+{{- if gt (int64 .Values.indexedSpace.count) (int64 0) }}
+{{- range $i := untilStep 1 (int .Values.indexedSpace.count) 1 }}
+---
+apiVersion: tenancy.kiosk.sh/v1alpha1
+kind: Space
+metadata:
+  name: {{ $generatedNamespace }}-{{ $i }}
+  annotations:
+    workflowuid: {{ $.Values.workflowuid | quote }}
+    email: {{ $.Values.email }}
+  labels:
+    {{- $labels | nindent 4 }}
+  {{- if $.Values.indexedSpace.extraLabels }}
+    {{- toYaml $.Values.indexedSpace.extraLabels | nindent 4 -}}
+  {{- end }}
+spec:
+  account: {{ $generatedKioskName }}
+{{- end }}
+{{- end }}
