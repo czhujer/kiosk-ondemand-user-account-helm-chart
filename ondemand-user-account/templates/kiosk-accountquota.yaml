@@ -1,0 +1,18 @@
+{{- if .Values.accountQuota.enabled }}
+apiVersion: config.kiosk.sh/v1alpha1
+kind: AccountQuota
+metadata:
+  name: {{ include "ondemand-user-account.generatedKioskName" . }}
+  labels:
+    {{- include "ondemand-user-account.labels" . | nindent 4 }}
+  {{- if .Values.accountQuota.extraLabels }}
+    {{- toYaml .Values.accountQuota.extraLabels | nindent 4 -}}
+  {{- end }}
+spec:
+  account: {{ include "ondemand-user-account.generatedKioskName" . }}
+  quota:
+    hard:
+      pods: {{ .Values.accountQuota.quota.hard.pods | quote }}
+      limits.cpu: {{ .Values.accountQuota.quota.hard.limitsCpu | quote }}
+      limits.memory: {{ .Values.accountQuota.quota.hard.limitsMemory | quote }}
+{{- end }}

@@ -1,0 +1,32 @@
+{{- if .Values.account.enabled }}
+apiVersion: tenancy.kiosk.sh/v1alpha1
+kind: Account
+metadata:
+  name: {{ include "ondemand-user-account.generatedKioskName" . }}
+  labels:
+    {{- include "ondemand-user-account.labels" . | nindent 4 }}
+  {{- if .Values.account.extraLabels }}
+    {{- toYaml .Values.account.extraLabels | nindent 4 -}}
+  {{- end }}
+spec:
+  space:
+    limit: {{ .Values.account.limit | int }}
+    spaceTemplate:
+      metadata:
+        annotations:
+          workflowuid: {{ .Values.workflowuid | quote }}
+          email: {{ .Values.email }}
+        {{- if .Values.account.templateExtraLabels }}
+        labels:
+          {{- toYaml .Values.account.templateExtraLabels | nindent 10 -}}
+        {{- end }}
+  subjects:
+    - kind: User
+      name: {{ .Values.email }}
+      apiGroup: rbac.authorization.k8s.io
+    {{- range .Values.account.shareWith }}
+    - kind: User
+      name: {{ . }}
+      apiGroup: rbac.authorization.k8s.io
+    {{- end }}
+{{- end }}

@@ -1,0 +1,16 @@
+{{- if .Values.defaultSpace.enabled }}
+apiVersion: tenancy.kiosk.sh/v1alpha1
+kind: Space
+metadata:
+  name: {{ include "ondemand-user-account.generatedNamespace" . }}
+  annotations:
+    workflowuid: {{ .Values.workflowuid | quote }}
+    email: {{ .Values.email }}
+  labels:
+    {{- include "ondemand-user-account.labels" . | nindent 4 }}
+  {{- if .Values.defaultSpace.extraLabels }}
+    {{- toYaml .Values.defaultSpace.extraLabels | nindent 4 -}}
+  {{- end }}
+spec:
+  account: {{ include "ondemand-user-account.generatedKioskName" . }}
+{{- end }}

@@ -1,0 +1,44 @@
+nameOverride: ""
+fullnameOverride: ""
+
+workflowuid: ""
+email: ""
+
+certificate:
+  enabled: true
+  indexedCertificate:
+    enabled: true
+  extraLabels: {}
+  name: environment-certificate
+  secretName: environment-certificate-tls
+  issuer:
+    name: letsencrypt-production
+    kind: ClusterIssuer
+  dnsDomain: personal.ataccama.dev
+
+account:
+  enabled: true
+  extraLabels: {}
+  templateExtraLabels:
+    personal: "true"
+  limit: 5
+  shareWith: []
+
+accountQuota:
+  enabled: true
+  extraLabels: {}
+  quota:
+    hard:
+      limitsCpu: 16
+      limitsMemory: 64G
+      pods: 20
+
+defaultSpace:
+  enabled: true
+  extraLabels:
+    personal: "true"
+
+indexedSpace:
+  count: 0
+  extraLabels:
+    personal: "true"
