@@ -1,0 +1,86 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: bootstrap-ondemand-environment
+  namespace: argo-workflows
+spec:
+  arguments:
+    parameters:
+    - name: space-count (limit is 5)
+      value: 0
+    - name: share-with-1
+      value: "undefined"
+    - name: share-with-2
+      value: "undefined"
+  entrypoint: create-k8s-objects
+  serviceAccountName: argo-workflows-clusteradmin
+  templates:
+  - inputs:
+      artifacts:
+      - name: helm-source
+        path: /src
+        git:
+          repo: https://ondemand-argo-workflows:iFnFvCLa9_jv8LNUviSa@gitlab.ataccama.dev/engineering/src/one/ops/helm-charts/ondemand-user-account-helm-chart.git
+          # revision: "pm-add-chart"
+          revision: "v0.1"
+          depth: 1
+      parameters:
+      - name: space-count
+      - name: share-with-1
+      - name: share-with-2
+    metadata: {}
+    name: create-k8s-objects
+    ttlStrategy:
+      secondsAfterCompletion: 864000
+    outputs:
+      parameters:
+      - name: space-count
+        value: '{{inputs.parameters.space-count}}'
+    script:
+      command:
+      - sh
+      image: alpine/helm:3.7.2
+      name: ""
+      resources: {}
+      source: |
+        set -euo pipefail
+        echo "##################### repository info ############"
+        git remote -v | awk '{split($0,a,"@"); print a[2]}'
+        git status
+        ls -lh
+        echo ""
+        echo "##################### variables info ############"
+        spacecount={{inputs.parameters.space-count}}
+        spacecount=$(printf '%d' "${spacecount}" 2>/dev/null)
+        echo "space-count: ${spacecount}"
+        shared1={{inputs.parameters.share-with-1}}
+        shared1set=""
+        if [ "$shared1" != "undefined" ]; then
+          shared1set="--set=account.shareWith[0]=\"${shared1}\""
+        fi;
+        shared2={{inputs.parameters.share-with-2}}
+        shared2set=""
+        if [ "$shared2" != "undefined" ]; then
+          shared2set="--set=account.shareWith[1]=\"${shared2}\""
+        fi;
+        echo "shared with: ${shared1} ${shared2}"
+        
+        email=$(echo {{workflow.labels.workflows.argoproj.io/creator-email}} | sed 's/\.at\./@/g')
+        echo "email: $email"
+        chartname=$(echo "od-account-${email}" |sed 's/[@|_|.]/-/g' | tr '[:upper:]' '[:lower:]')
+        echo "chart name: ${chartname}"
+        echo ""
+        echo "##################### helm info ############"
+        helm version
+        echo ""
+        set -x
+        helm upgrade --install \
+          --namespace kube-system \
+          --wait \
+          --set=email="${email}" \
+          --set=indexedSpace.count=${spacecount} ${shared1set} ${shared2set} \
+          --set=certificate.dnsDomain="personal.ataccama.dev"\
+          "${chartname}" \
+          ./ondemand-user-account
+      workingDir: /src
