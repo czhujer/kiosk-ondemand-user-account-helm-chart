@@ -12,9 +12,9 @@ certificate:
   name: environment-certificate
   secretName: environment-certificate-tls
   issuer:
-    name: letsencrypt-production
+    name: zerossl-production
     kind: ClusterIssuer
-  dnsDomain: personal.ataccama.dev
+  dnsDomain: aks.ondemand.ataccama.dev
 
 account:
   enabled: true
