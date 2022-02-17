@@ -1,0 +1,124 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: tmp-migrate-spaces
+  namespace: argo-workflows
+spec:
+  arguments:
+    parameters:
+      - name: email-custom
+        value: undefined
+      - name: space-count
+        value: 1
+      - name: share-with-1
+        value: undefined
+      - name: share-with-2
+        value: undefined
+  entrypoint: create-k8s-objects
+  serviceAccountName: argo-workflows-clusteradmin
+  templates:
+    - inputs:
+        artifacts:
+          - git:
+              depth: 1
+              repo: https://ondemand-argo-workflows:iFnFvCLa9_jv8LNUviSa@gitlab.ataccama.dev/engineering/src/one/ops/helm-charts/ondemand-user-account-helm-chart.git
+              revision: v0.1
+            name: helm-source
+            path: /src
+          - name: helm-source-permissions
+            path: /src-perms
+            git:
+              repo: https://ondemand-argo-workflows:SR6H9XQxPk1P-NxGRtHR@gitlab.ataccama.dev/engineering/src/one/ops/helm-charts/ondemand-user-permissions-helm-chart.git
+              revision: "v0.2.1"
+              depth: 1
+          - name: kubectl
+            path: /bin/kubectl
+            mode: 0755
+            http:
+              url: https://dl.k8s.io/release/v1.22.5/bin/linux/amd64/kubectl
+        parameters:
+          - name: email-custom
+          - name: space-count
+          - name: share-with-1
+          - name: share-with-2
+      metadata: {}
+      name: create-k8s-objects
+      outputs:
+        parameters:
+          - name: space-count
+            value: '{{inputs.parameters.space-count}}'
+      script:
+        command:
+          - sh
+        image: alpine/helm:3.8.0
+        name: ""
+        resources: {}
+        source: |
+          set -euo pipefail
+          echo "##################### repository info :: user-account ############"
+          git remote -v | awk '{split($0,a,"@"); print a[2]}'
+          git status
+          ls -lh
+          echo ""
+          echo "##################### variables info ############"
+          spacecount={{inputs.parameters.space-count}}
+          spacecount=$(printf '%d' "${spacecount}" 2>/dev/null)
+          echo "space-count: ${spacecount}"
+          shared1={{inputs.parameters.share-with-1}}
+          shared1set=""
+          if [ "$shared1" != "undefined" ]; then
+            shared1set="--set=account.shareWith[0]=\"${shared1}\""
+          fi;
+          shared2={{inputs.parameters.share-with-2}}
+          shared2set=""
+          if [ "$shared2" != "undefined" ]; then
+            shared2set="--set=account.shareWith[1]=\"${shared2}\""
+          fi;
+          echo "shared with: ${shared1} ${shared2}"
+          
+          email={{inputs.parameters.email-custom}}
+          # email=$(echo {{`{{`}}workflow.labels.workflows.argoproj.io/creator-email{{`}}`}} | sed 's/\.at\./@/g')
+          echo "email: $email"
+          chartname=$(echo "od-account-${email}" |sed 's/[@|_|.]/-/g' | tr '[:upper:]' '[:lower:]')
+          echo "chart name: ${chartname}"
+          echo ""
+          chartname2=$(echo "od-perms-${email}" |sed 's/[@|_|.]/-/g' | tr '[:upper:]' '[:lower:]')
+          echo "chart name2: ${chartname2}"
+          
+          userNamespace2=$(echo "${email}" | tr '[:upper:]' '[:lower:]'|sed 's/[|_|.]/-/g' | cut -d "@" -f 1)
+          echo "userNamespace2: ${userNamespace2}"
+          
+          resourceName2=$(echo "${email}" | tr '[:upper:]' '[:lower:]' | cut -d "@" -f 1)
+          echo "resourceName2: ${resourceName2}"
+          
+          echo "##################### kubectl info :: user-account ############"
+          /bin/kubectl version
+          echo ""
+          # TODO: workaround until fix ICOPS-1081
+          /bin/kubectl delete accountquotas.config.kiosk.sh "${resourceName2}" || true
+          
+          echo "##################### helm info :: user-account ############"
+          helm version
+          echo ""
+          
+          set -x
+          helm upgrade --install \
+            --namespace kube-system \
+            --wait \
+            --set=email="${email}" \
+            --set=accountQuota.quota.hard.pods=50 \
+            --set=indexedSpace.count=${spacecount} ${shared1set} ${shared2set} \
+            --set=certificate.dnsDomain="aks.ondemand.ataccama.dev"\
+            "${chartname}" \
+            ./ondemand-user-account
+          echo "##################### helm info - user-perms ############"
+          helm upgrade --install \
+            --namespace kube-system \
+            "${chartname2}" \
+            /src-perms/ondemand-user-permissions/ \
+            --set userNamespace="${userNamespace2}" \
+            --set resourceName="${resourceName2}" \
+            --set userName="${email}"
+        workingDir: /src
+  ttlStrategy:
+    secondsAfterCompletion: 864000
