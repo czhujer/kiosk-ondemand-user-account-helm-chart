@@ -62,7 +62,7 @@ generated destination namespace
 {{- $cuttedEmail := regexReplaceAll "@[\\w|\\.|-|_]+$" $email "" -}}
 {{ regexReplaceAll "\\." $cuttedEmail "-" }}
 {{- else -}}
-{{- required "A valid .Values.email entry required! (wrong email format)" "" -}}
+{{- $email -}}
 {{- end -}}
 {{- end }}
 
