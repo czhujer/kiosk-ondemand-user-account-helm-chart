@@ -75,6 +75,6 @@ generated kiosk name
 {{- if $validEmail -}}
 {{ regexReplaceAll "@[\\w|\\.|-|_]+$" $email "" -}}
 {{- else -}}
-{{- required "A valid .Values.email entry required! (wrong email format)" "" -}}
+{{- $email -}}
 {{- end -}}
 {{- end }}
