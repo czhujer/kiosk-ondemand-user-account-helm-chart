@@ -29,9 +29,9 @@ accountQuota:
   extraLabels: {}
   quota:
     hard:
-      limitsCpu: 16
-      limitsMemory: 64G
-      pods: 20
+      limitsCpu: 32
+      limitsMemory: 96G
+      pods: 30
 
 defaultSpace:
   enabled: true
