@@ -42,3 +42,5 @@ indexedSpace:
   count: 0
   extraLabels:
     personal: "true"
+
+customKioskName: ""

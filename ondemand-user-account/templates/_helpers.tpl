@@ -56,6 +56,9 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 generated destination namespace
 */}}
 {{- define "ondemand-user-account.generatedNamespace" -}}
+{{- if .Values.customKioskName }}
+{{- .Values.customKioskName }}
+{{- else }}
 {{- $email := .Values.email | lower }}
 {{- $validEmail := regexMatch "^\\w+\\.[\\w]+@[\\w|\\.|-|_]+$" $email -}}
 {{- if $validEmail -}}
@@ -65,11 +68,15 @@ generated destination namespace
 {{- required "A valid .Values.email entry required! (wrong email format)" "" -}}
 {{- end -}}
 {{- end }}
+{{- end }}
 
 {{/*
 generated kiosk name
 */}}
 {{- define "ondemand-user-account.generatedKioskName" -}}
+{{- if .Values.customKioskName }}
+{{- .Values.customKioskName }}
+{{- else }}
 {{- $email := .Values.email | lower }}
 {{- $validEmail := regexMatch "^\\w+\\.[\\w]+@[\\w|\\.|-|_]+$" $email -}}
 {{- if $validEmail -}}
@@ -77,4 +84,5 @@ generated kiosk name
 {{- else -}}
 {{- required "A valid .Values.email entry required! (wrong email format)" "" -}}
 {{- end -}}
+{{- end }}
 {{- end }}
