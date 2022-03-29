@@ -1,0 +1,20 @@
+---
+image: harbor.ataccama.dev/tool/cloud-toolz:20220121124648
+
+workflow:
+  rules:
+    #    - if: '$CI_PIPELINE_SOURCE == "push"'
+    #      when: never
+    - when: always
+
+variables:
+  DESTROY_ENVIRONMENT:
+    value: "false"
+    description: "Do not destroy deployment"
+  ASSIGNED_NAMESPACE_OWNERS: "Patrik.Majer@ataccama.com"
+  ASSIGNED_NAMESPACE: "patrik-majer-test-1"
+
+include:
+  - project: engineering/ci/ondemand-testing
+    ref: IDP-431-part1
+    file: general-test-pipeline.yml
